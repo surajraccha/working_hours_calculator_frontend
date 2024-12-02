@@ -42,7 +42,7 @@ export function useUserSettings(userId: string) {
     try {
       const savedSettings = await saveUserSettings(newSettings);
       setSettings(savedSettings);
-      //return savedSettings;
+      return savedSettings;
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to save settings'));
       throw err;
