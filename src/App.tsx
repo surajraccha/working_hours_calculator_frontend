@@ -29,7 +29,7 @@ function WorkHoursTracker() {
 
   const stats = {
     totalMinutesWorked: filteredEntries.reduce((sum, entry) => sum + entry.minutesWorked, 0),
-    targetMinutes: (settings?.workingDaysPerMonth?settings.workingDaysPerMonth:1) * (settings?.hoursPerDay?settings.workingDaysPerMonth:1) * 60,
+    targetMinutes: (settings?.workingDaysPerMonth?settings.workingDaysPerMonth:1) * (settings?.hoursPerDay?settings.hoursPerDay:1) * 60,
     remainingMinutes: 0,
     daysWorked: filteredEntries.filter(e => e.type !== 'holiday').length,
     holidayCount: filteredEntries.filter(e => e.type === 'holiday').length,
