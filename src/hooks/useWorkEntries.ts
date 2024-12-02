@@ -46,7 +46,7 @@ export function useWorkEntries(userId: string, monthYear: MonthYear) {
     }
   }
 
-  async function removeEntry(entry:any) {
+  async function removeEntry(entry:WorkEntry) {
     try {
       await deleteWorkEntry(entry.id,entry.userId);
       setEntries(prev => prev.filter(e => e.id !== entry.id));

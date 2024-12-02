@@ -25,7 +25,7 @@ export function Settings({ settings, onUpdate }: SettingsProps) {
             min="1"
             max="23"
             value={settings.workingDaysPerMonth}
-            onChange={(e) => onUpdate({
+            onBlur={(e) => onUpdate({
               ...settings,
               workingDaysPerMonth: Number(e.target.value)
             })}
@@ -42,7 +42,7 @@ export function Settings({ settings, onUpdate }: SettingsProps) {
             min="1"
             max="24"
             value={settings.hoursPerDay}
-            onChange={(e) => onUpdate({
+            onBlur={(e) => onUpdate({
               ...settings,
               hoursPerDay: Number(e.target.value)
             })}
