@@ -70,6 +70,7 @@ function WorkHoursTracker() {
           settings={settings} 
           onSubmit={handleAddEntry}
           existingEntries={entries}
+          selectedMonth={selectedMonthYear}
         />
         <EntriesList 
           entries={entries}

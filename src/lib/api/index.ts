@@ -31,7 +31,7 @@ export async function saveUserSettings(settings: UserSettings): Promise<UserSett
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings),
     });
-    return settings
+    return handleApiResponse<UserSettings>(response);
   } catch (error) {
     throw createApiError(error);
   }
@@ -42,7 +42,13 @@ export async function getWorkEntries(userId: string, month: number, year: number
     const response = await fetch(
       `${BASE_URL}/getWorkEntries?userId=${userId}&month=${month}&year=${year}`
     );
-    return handleApiResponse<WorkEntry[]>(response);
+    const entries = await handleApiResponse<WorkEntry[]>(response);
+    
+    // Filter entries for the specific month and year
+    return entries.filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate.getMonth() === month && entryDate.getFullYear() === year;
+    });
   } catch (error) {
     throw createApiError(error);
   }
@@ -55,7 +61,7 @@ export async function saveWorkEntry(entry: WorkEntry): Promise<WorkEntry> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(entry),
     });
-    const data = await handleApiResponse<{ _id: string }>(response);
+    const data = await handleApiResponse<WorkEntry & { _id: string }>(response);
     return { ...entry, _id: data._id };
   } catch (error) {
     throw createApiError(error);

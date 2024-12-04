@@ -1,49 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Plus, Pencil, AlertCircle } from 'lucide-react';
+import { Clock, Plus, AlertCircle } from 'lucide-react';
 import { calculateMinutesWorked, getDefaultWorkMinutes } from '../utils/timeCalculations';
-import { isWeekend } from '../utils/dateUtils';
-import { validateEntry } from '../utils/validation';
-import type { WorkEntry, UserSettings } from '../types';
+import { validateDateSelection, isDateInMonth } from '../utils/dateUtils';
+import type { WorkEntry, UserSettings, MonthYear } from '../types';
 
 interface TimeEntryFormProps {
   onSubmit: (entry: WorkEntry) => void;
-  editEntry?: WorkEntry;
-  onCancel?: () => void;
   settings: UserSettings;
   existingEntries: WorkEntry[];
+  selectedMonth: MonthYear;
 }
 
-export function TimeEntryForm({ onSubmit, editEntry, onCancel, settings, existingEntries }: TimeEntryFormProps) {
-  const [date, setDate] = useState(editEntry?.date || new Date().toISOString().split('T')[0]);
-  const [entryTime, setEntryTime] = useState(editEntry?.entryTime || '');
-  const [exitTime, setExitTime] = useState(editEntry?.exitTime || '');
-  const [type, setType] = useState<WorkEntry['type']>(editEntry?.type || 'office');
-  const [description, setDescription] = useState(editEntry?.description || '');
+export function TimeEntryForm({ onSubmit, settings, existingEntries, selectedMonth }: TimeEntryFormProps) {
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [entryTime, setEntryTime] = useState('');
+  const [exitTime, setExitTime] = useState('');
+  const [type, setType] = useState<WorkEntry['type']>('office');
+  const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (editEntry) {
-      setDate(editEntry.date);
-      setEntryTime(editEntry.entryTime);
-      setExitTime(editEntry.exitTime);
-      setType(editEntry.type);
-      setDescription(editEntry.description || '');
-    }
-  }, [editEntry]);
-
   const validateForm = (): boolean => {
-    // Check for duplicate date entry
-    const hasDuplicate = existingEntries.some(entry => 
-      entry.date === date && (!editEntry || entry.id !== editEntry.id)
-    );
-    
-    if (hasDuplicate) {
-      setError('An entry already exists for this date');
+    // Check if the date is in the selected month
+    if (!isDateInMonth(date, selectedMonth.month, selectedMonth.year)) {
+      setError(`Please select a date in ${new Date(selectedMonth.year, selectedMonth.month).toLocaleString('default', { month: 'long', year: 'numeric' })}`);
       return false;
     }
 
-    if (isWeekend(date)) {
-      setError('Entries cannot be added for weekends');
+    // Validate date selection
+    if (!validateDateSelection(date)) {
+      setError('Invalid date selection. Weekends and future dates are not allowed.');
+      return false;
+    }
+
+    // Check for duplicate date entry
+    const hasDuplicate = existingEntries.some(entry => entry.date === date);
+    if (hasDuplicate) {
+      setError('An entry already exists for this date');
       return false;
     }
 
@@ -53,12 +45,8 @@ export function TimeEntryForm({ onSubmit, editEntry, onCancel, settings, existin
         return false;
       }
 
-      const [entryHour, entryMinute] = entryTime.split(':').map(Number);
-      const [exitHour, exitMinute] = exitTime.split(':').map(Number);
-      const entryMinutes = entryHour * 60 + entryMinute;
-      const exitMinutes = exitHour * 60 + exitMinute;
-
-      if (exitMinutes <= entryMinutes) {
+      const minutesWorked = calculateMinutesWorked(entryTime, exitTime);
+      if (minutesWorked <= 0) {
         setError('Exit time must be later than entry time');
         return false;
       }
@@ -85,7 +73,6 @@ export function TimeEntryForm({ onSubmit, editEntry, onCancel, settings, existin
     }
 
     onSubmit({
-      ...(editEntry?.id ? { id: editEntry.id } : {}),
       date,
       entryTime: type === 'office' ? entryTime : '',
       exitTime: type === 'office' ? exitTime : '',
@@ -95,21 +82,18 @@ export function TimeEntryForm({ onSubmit, editEntry, onCancel, settings, existin
       userId: settings.userId
     });
 
-    if (!editEntry) {
-      setEntryTime('');
-      setExitTime('');
-      setDescription('');
-      setType('office');
-    }
+    // Reset form
+    setEntryTime('');
+    setExitTime('');
+    setDescription('');
+    setType('office');
   };
 
   return (
     <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md mb-6">
       <div className="flex items-center mb-4">
         <Clock className="w-6 h-6 text-blue-500 mr-2" />
-        <h2 className="text-xl font-semibold">
-          {editEntry ? 'Edit Entry' : 'New Entry'}
-        </h2>
+        <h2 className="text-xl font-semibold">New Entry</h2>
       </div>
 
       {error && (
@@ -204,22 +188,13 @@ export function TimeEntryForm({ onSubmit, editEntry, onCancel, settings, existin
         </div>
       </div>
       
-      <div className="flex justify-end space-x-2 mt-4">
-        {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-          >
-            Cancel
-          </button>
-        )}
+      <div className="flex justify-end mt-4">
         <button
           type="submit"
           className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
         >
-          {editEntry ? <Pencil className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
-          {editEntry ? 'Update Entry' : 'Add Entry'}
+          <Plus className="w-4 h-4 mr-2" />
+          Add Entry
         </button>
       </div>
     </form>
