@@ -65,7 +65,7 @@ function WorkHoursTracker() {
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Work Hours Tracker</h1>
         <Settings settings={settings} onUpdate={updateSettings} />
         <MonthYearPicker current={selectedMonthYear} onChange={setSelectedMonthYear} />
-        <MonthlyStats stats={stats} />
+        <MonthlyStats settings={settings} stats={stats} />
         <TimeEntryForm 
           settings={settings} 
           onSubmit={handleAddEntry}
